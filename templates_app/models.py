@@ -12,6 +12,7 @@ class Template(models.Model):
     )
     placeholders = models.JSONField(
         default=list,
+        blank=True,
         verbose_name="Lista de placeholders do template"
     )
     created_at = models.DateTimeField(
