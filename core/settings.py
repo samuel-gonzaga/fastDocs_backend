@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'core',
     'templates_app'
 ]
@@ -135,9 +136,6 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'core.utils.custom_exception.custom_exception_handler',
     'DEFAULT_RENDERER_CLASSES': (
         'core.utils.renderes.CustomJSONRenderer',
-    ),
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.AllowAny',
