@@ -6,7 +6,7 @@ class TemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Template
         fields = '__all__'
-        read_only_fields = ['id', 'placeholders', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'placeholders', 'created_at']
 
     def create(self, validated_data):
         """

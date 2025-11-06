@@ -6,7 +6,7 @@ class Template(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
     file = models.FileField(
-        upload_to="templates/",
+        upload_to="templates_app/templates/",
         validators=[FileExtensionValidator(allowed_extensions=["docx", "doc", "txt"])],
         verbose_name="Nome do template"
     )
@@ -18,10 +18,6 @@ class Template(models.Model):
     created_at = models.DateTimeField(
         default=timezone.now,
         verbose_name="Data de criação"
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="Data de atualização"
     )
 
     class Meta:
