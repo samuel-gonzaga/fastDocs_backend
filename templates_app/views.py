@@ -11,8 +11,8 @@ from core.utils.exceptions import ValidationError
 from core.utils.formatters import format_serializer_error
 
 from docxtpl import DocxTemplate
-import tempfile
-import os
+from io import BytesIO
+from django.http import HttpResponse
 
 
 class TemplateViewSet(viewsets.ModelViewSet):
@@ -22,18 +22,23 @@ class TemplateViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
 
     def create(self, request: Request, *args, **kwargs):
+        """
+        Cria um template no banco, armazena o binário do arquivo e extrai placeholders.
+        """
         serializer = self.get_serializer(data=request.data)
 
         if not serializer.is_valid():
             error_message = format_serializer_error(serializer.errors)
             raise ValidationError(detail=error_message)
 
+        # Salva o template (o arquivo é convertido em binário no serializer)
         template = serializer.save()
 
+        # Extrai placeholders diretamente da memória
         try:
-            extractor = PlaceholderExtractor(template.file.path)
-            template.placeholders = extractor.extract()
-            template.save()
+            file_stream = BytesIO(template.file_content)
+            template.placeholders = PlaceholderExtractor.extract(file_stream)
+            template.save(update_fields=['placeholders'])
         except Exception as e:
             print(f"[ERRO] Falha ao extrair placeholders: {e}")
 
@@ -57,7 +62,8 @@ class TemplateViewSet(viewsets.ModelViewSet):
     @decorators.action(detail=True, methods=['post'])
     def generate(self, request: Request, pk=None):
         """
-        Gera um novo documento preenchido com base nos dados enviados.
+        Gera um documento preenchido com base nos dados enviados.
+        Retorna o arquivo .docx diretamente em memória, sem salvar localmente.
         """
         try:
             template = self.get_object()
@@ -67,27 +73,21 @@ class TemplateViewSet(viewsets.ModelViewSet):
             if not isinstance(context_data, dict):
                 raise ValidationError(detail="O campo 'data' deve ser um objeto com os placeholders e valores.")
 
-            # Gera o documento com base no template
-            doc = DocxTemplate(template.file.path)
+            # Carrega o template direto do binário
+            doc = DocxTemplate(BytesIO(template.file_content))
             doc.render(context_data)
 
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as tmp:
-                output_path = tmp.name
-                doc.save(output_path)
+            # Salva o resultado em memória
+            buffer = BytesIO()
+            doc.save(buffer)
+            buffer.seek(0)
 
-            # Lê o arquivo gerado
-            with open(output_path, "rb") as f:
-                file_content = f.read()
-
-            # Remove o arquivo temporário
-            os.remove(output_path)
-
-            # Retorna o arquivo como resposta binária
-            response = Response(
-                file_content,
+            # Retorna o arquivo em memória
+            response = HttpResponse(
+                buffer.getvalue(),
                 content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             )
-            response["Content-Disposition"] = f'attachment; filename="{output_name}.docx"'
+            response["Content-Disposition"] = f'attachment; filename=\"{output_name}.docx\"'
             return response
 
         except Template.DoesNotExist:
