@@ -1,22 +1,26 @@
-# services/placeholder_service.py
 from docxtpl import DocxTemplate
 import re
+from io import BytesIO
 
 class PlaceholderExtractor:
     @staticmethod
-    def extract(docx_path):
+    def extract(source):
         """
-        Extrai placeholders de um arquivo .docx usando docxtpl.
+        Extrai placeholders de um arquivo .docx.
+        Aceita tanto um caminho de arquivo (str) quanto um BytesIO.
         Retorna uma lista ordenada de placeholders encontrados.
         """
         try:
-            # Carrega o template
-            doc = DocxTemplate(docx_path)
+            # Se for um caminho de arquivo, abre normalmente
+            if isinstance(source, str):
+                doc = DocxTemplate(source)
+            # Se for um binário (em memória)
+            elif isinstance(source, BytesIO):
+                doc = DocxTemplate(source)
+            else:
+                raise TypeError("O parâmetro 'source' deve ser um caminho ou BytesIO.")
 
-            # Usa o método interno para obter todos os placeholders do Jinja2
             placeholders = doc.get_undeclared_template_variables()
-
-            # Retorna como lista ordenada
             return sorted(list(placeholders))
 
         except Exception as e:
