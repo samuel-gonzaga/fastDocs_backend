@@ -1,0 +1,11 @@
+Endpoint: http://127.0.0.1:8000/api/v1/templates/{id}/generate/
+Exemplo body:
+(Nome "data" deve ser exatamente igual ao template)
+{
+    "output_name": "contrato_samuel",
+    "data": {
+        "nome_cliente": "Samuel Gonzaga",
+        "valor": "2000",
+        "data": "06/11/2025"
+    }
+}
